@@ -1,0 +1,12 @@
+[package]
+name = "todo_app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.3", features = ["json"] }
+futures = "0.3.31"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", features = ["alloc"] , default-features = false}
+tokio = { version = "1.44.1", features = ["full"] }
+

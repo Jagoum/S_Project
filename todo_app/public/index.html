@@ -19,24 +19,5 @@
             <input type="submit" value="Create Todo">
         </form>
     </fieldset>
-<script>
-    const form = document.getElementById('todo-form');
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const id = document.getElementById('id').value;
-        const title = document.getElementById('title').value;
-
-        const response = await fetch('http://127.0.0.1:7879/todos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, title }),
-        });
-
-        const result = await response.text();
-        alert(result);
-    });
-</script>
 </body>
-
 </html>

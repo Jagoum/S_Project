@@ -1,36 +1,30 @@
-use std::env::args;
-
-use axum::{http::Response, Router};
-use todo::{add_todo, get_todo, read_file, remove_todo};
 mod todo;
-fn main() {
-    // let app = Router::new().route("/", method_router)
+use axum::{
+    response::Html, routing::{delete, get, post}, serve, Router
+};
+use eyre::Result;
+use todo::{add_todo, get_todo, remove_todo, AppState};
+use tokio::net::TcpListener;
+type State = AppState;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let state = State::new();
+    let listener = TcpListener::bind("0.0.0.0:7879")
+        .await
+        .expect("Failed to bind Ip ");
+    println!("Server serving on http://localhost:7879");
+    let app: Router = Router::new()
+        .route("/", get(index))
+        .route("/todos", get(get_todo))
+        .route("/todos", post(add_todo))
+        .route("/todos/{id}", delete(remove_todo))
+        .fallback(|| async {r#"<h1>PAGE NOT FOUND</h1><br><h2>404</h2>"#})
+        .with_state(state);
+    serve(listener, app).await.expect("Failed to start server");
+    Ok(())
 }
 
-
-
-fn run_todo() {
-    let mut items = read_file("./task.json");
-    let args: Vec<String> = args().collect();
-    let binding = String::from("0");
-    let id = args.get(2).unwrap_or(&binding);
-    let binding = String::from("value");
-    let title = args.get(3).unwrap_or(&binding);
-
-    let command = args.get(1).unwrap().as_str();
-
-    match command {
-        "add" => {
-            let items = add_todo(id.to_string(), title.into(), &mut items);
-            println!("Items: {items:?}")
-        }
-        "delete" => {
-            let items = remove_todo(id.to_string(), &mut items);
-            println!("Items: {items:?}")
-        }
-        "list" => {
-            get_todo(&mut items);
-        }
-        _ => println!("Invalid Command"),
-    }
+async fn index() -> Html<String> {
+    Html(std::include_str!("../public/index.html").to_string())
 }

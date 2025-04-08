@@ -1,52 +1,62 @@
-use std::{fs::{self, OpenOptions}, io::Read};
-use serde_json::{Map, Value, json};
-pub enum status {
-    Todo,
-    Pending,
-    Done,
+use axum::{
+    extract::{Path, Query, State},
+    response::IntoResponse,
+};
+use futures::lock::Mutex;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, sync::Arc};
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct Todo {
+    pub id: String,
+    pub title: String,
 }
 
-pub fn add_todo(id: String, title: String,  items: &mut  Map<String, Value>) ->() {
-    items.insert(id.clone(), json!(title));
-    write_to_file("./task.json", items);
-    println!(r#"Adding task : "{title}" with id {id}"#);    
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub item: Arc<Mutex<HashMap<String, String>>>,
 }
-
-pub fn remove_todo(id: String, mut items: &mut Map<String, Value>) {
-    items.remove(&id);
-    write_to_file("./task.json", items);
-    println!("Remove task with id {id}");
-
-}
-
-pub fn get_todo(items: &mut Map<String, Value>) {
-    println!("List Of Available Tasks");
-    for (id, title) in items {
-        println!("{id}: {title}");
+impl AppState {
+    pub fn new() -> AppState {
+        let item = Arc::new(Mutex::new(HashMap::new()));
+        AppState { item }
     }
 }
-// this function is to save the different tasks in my file
-pub fn write_to_file(file_name: &str, items: &mut Map<String, Value>) {
-    let new_data = json!(items);
-    fs::write(file_name.to_string(), new_data.to_string()).expect("Failed to write to file");
+
+impl Todo {
+    pub fn new() -> Self {
+        Self {
+            id: 0.to_string(),
+            title: 0.to_string(),
+        }
+    }
+}
+// Trying to extract path params to add a todo
+pub async fn add_todo(State(app): State<AppState>, Query(item): Query<Todo>) -> impl IntoResponse {
+    app.item
+        .lock()
+        .await
+        .insert(item.id.clone(), item.title.clone());
+    println!("Task: {} with TaskId: {} added\n", item.title, item.id);
+    format!("Task: {} with TaskId: {} added\n", item.title, item.id)
 }
 
-pub fn read_file(file_name: &str) -> Map<String, Value> {
-    let mut file = match OpenOptions::new().read(true).write(true).create(true).open(file_name) {
-        Ok(file) => {file},
-        Err(err) => {eprintln!("Could not Open or even create file");return Err("()").unwrap();},
-    };
+pub async fn remove_todo(
+    State(app): State<AppState>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    app.item.lock().await.remove(&id);
+    println!("Remove task with ID: {}\n", id);
+    format!("Remove task with ID: {}\n", id)
+}
 
-    let mut file_data = String::new();
-    file.read_to_string(&mut file_data).unwrap();
-
-    let json: Value = match serde_json::from_str(&file_data) {
-        Ok(val) => val,
-        Err(e) => {
-            eprintln!("Failed To Parse Data {}", e);
-            return Map::default();
-        }
-    };
-    let state = json.as_object().unwrap().clone();
-    state
+pub async fn get_todo(State(app): State<AppState>) -> impl IntoResponse {
+    println!("List Of Available Tasks");
+    let mut task = String::new();
+    let app = app.item.try_lock().unwrap().clone();
+    for (id, title) in app {
+        print!("Task_Id: {}, Task: {}\n", id, title);
+        task.push_str(&format!("Task_Id: {}, Task: {}\n", id, title));
+    }
+    format!("{}", task)
 }

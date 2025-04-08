@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    response::IntoResponse,
+    response::IntoResponse
 };
 use futures::lock::Mutex;
 use serde::{Deserialize, Serialize};
@@ -8,8 +8,8 @@ use std::{collections::HashMap, sync::Arc};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Todo {
-    pub id: String,
-    pub title: String,
+    id: String,
+    title: String,
 }
 
 #[derive(Debug, Clone)]
@@ -23,14 +23,7 @@ impl AppState {
     }
 }
 
-impl Todo {
-    pub fn new() -> Self {
-        Self {
-            id: 0.to_string(),
-            title: 0.to_string(),
-        }
-    }
-}
+
 // Trying to extract path params to add a todo
 pub async fn add_todo(State(app): State<AppState>, Query(item): Query<Todo>) -> impl IntoResponse {
     app.item

@@ -1,4 +1,4 @@
 
 [workspace]
 resolver = "2"
-members = ["todo_app", "todo_app_v2"]
+members = ["todo_app", "todo_app_v2", "url-shortener"]

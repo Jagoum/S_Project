@@ -1,21 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
 </head>
+
 <body>
-<h1>Welcome To My Todo App</h1>
-<fieldset>
-    <legend>Add Todo Task</legend>
-    <form action="http://127.0.0.1:7879/todos" method="POST">
-        <label for="id">ID: </label>
-        <input type="text" name="id" required />
-        <label for="title">Todo Title: </label>
-        <input type="text" name="title" required/>
-        <input type="submit" value="Create Todo">
-    </form> 
-</fieldset>
+    <h1>Welcome To My Todo App</h1>
+    <fieldset>
+        <legend>Add Todo Task</legend>
+        <form  id="todo-form" method="POST" action="http://localhost:7879/todos">
+            <label for="id">ID: </label>
+            <input type="text" name="id" required />
+            <label for="title">Todo Title: </label>
+            <input type="text" name="title" required />
+            <input type="submit" value="Create Todo">
+        </form>
+    </fieldset>
+<script>
+    const form = document.getElementById('todo-form');
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const id = document.getElementById('id').value;
+        const title = document.getElementById('title').value;
+
+        const response = await fetch('http://127.0.0.1:7879/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, title }),
+        });
+
+        const result = await response.text();
+        alert(result);
+    });
+</script>
 </body>
+
 </html>

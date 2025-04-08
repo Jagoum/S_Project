@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
         .route("/todos", get(get_todo))
         .route("/todos", post(add_todo))
         .route("/todos/{id}", delete(remove_todo))
-        .fallback(|| async {r#"<h1>PAGE NOT FOUND</h1><br><h2>404</h2>"#})
+        .fallback(|| async {"PAGE NOT FOUND 404"})
         .with_state(state);
     serve(listener, app).await.expect("Failed to start server");
     Ok(())

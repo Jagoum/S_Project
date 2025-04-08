@@ -19,8 +19,8 @@ To get this project locally do
 ```sh
 git clone https://github.com/Jagoum/S_Project.git
 cd S_Project.git
+cd todo_app
 ```
-
 
  How to use
  -----------

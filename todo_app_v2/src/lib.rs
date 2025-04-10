@@ -1,87 +1,86 @@
 // in lib.rs
-use std::{process, sync::atomic::{AtomicU64, self}};
+use std::{
+    process,
+    sync::atomic::{self, AtomicU64},
+};
 
 #[derive(Debug)]
-pub struct Task{
+pub struct Task {
     task: String,
-    done_status: bool, 
-    id: u64, 
+    done_status: bool,
+    id: u64,
 }
 
-impl Task{
-    fn update_status(&mut self){
-        if !self.done_status{
-        self.done_status = true; 
-        }
-        else{
+impl Task {
+    fn update_status(&mut self) {
+        if !self.done_status {
+            self.done_status = true;
+        } else {
             self.done_status = false;
         }
     }
 
-    fn update_task(&mut self, new_name: String){
-        self.task = new_name; 
+    fn update_task(&mut self, new_name: String) {
+        self.task = new_name;
     }
 }
 
-static UNIQUE_ID: AtomicU64  = AtomicU64::new(1); 
+static UNIQUE_ID: AtomicU64 = AtomicU64::new(1);
 
-fn display_todo(todo_list: &Vec<Task>){
+fn display_todo(todo_list: &Vec<Task>) {
     if todo_list.len() < 1 {
-        println!("Empty todo list"); 
-        return; 
+        println!("Empty todo list");
+        return;
     }
 
-    for item in todo_list{
-        println!("id: {}, name: {}, done: {}", item.id, item.task, item.done_status);
+    for item in todo_list {
+        println!(
+            "id: {}, name: {}, done: {}",
+            item.id, item.task, item.done_status
+        );
     }
 }
 
-fn add_new_task(todo_list: &mut Vec<Task>, task_string: &str){
-
+fn add_new_task(todo_list: &mut Vec<Task>, task_string: &str) {
     let id_no = UNIQUE_ID.fetch_add(1, atomic::Ordering::SeqCst);
 
-    let task: Task = Task{
-        task: task_string.into(), 
-        done_status: false, 
-        id: id_no, 
+    let task: Task = Task {
+        task: task_string.into(),
+        done_status: false,
+        id: id_no,
     };
 
-    todo_list.push(task); 
+    todo_list.push(task);
 
-    println!("{} added to the todo list: ", task_string); 
+    println!("{} added to the todo list: ", task_string);
 }
 
-fn remove_task(todo_list: &mut Vec<Task>, id_no: u64){
-
+fn remove_task(todo_list: &mut Vec<Task>, id_no: u64) {
     todo_list.pop().take_if(|task| task.id == id_no).unwrap();
-
 }
 
-fn get_task(todo_list: &mut Vec<Task>, task_id: u64) -> Result<&mut Task, &str>{
-
-    for task in todo_list{
-        if task.id == task_id{
+fn get_task(todo_list: &mut Vec<Task>, task_id: u64) -> Result<&mut Task, &str> {
+    for task in todo_list {
+        if task.id == task_id {
             return Ok(task);
-        }else{
+        } else {
             continue;
         }
-    };
+    }
 
-    return Err("Task not found in todo list"); 
-
+    return Err("Task not found in todo list");
 }
 
-
-fn display_help(){
+fn display_help() {
     let help: &str = "
         Welcome to the todo_list application. 
         structure of query: 
             command [arguments] 
 
         supported commands: 
-            add - Add a new task to the todo list, followed by a new task string. The task string should NOT be space separated. 
+            add - Add a new task to the todo list, followed by a new task string. The task string can contain multiple words.
 
-                usage: >add task_string
+                usage: >add task string with multiple words
 
             show - Display the todo list 
                 
@@ -112,101 +111,84 @@ fn display_help(){
 
             task_string: the string for the task provided by the user. ";
 
-    println!("{}", help); 
+    println!("{}", help);
 }
 
-fn parse_arguments(args: Vec<&str>, todo_list: &mut Vec<Task>){
+fn parse_arguments(args: Vec<&str>, todo_list: &mut Vec<Task>) {
     let command = args[0];
 
-    match command{
+    match command {
         "add" => {
-
-            if let Some(value) = args.get(1){
-                let new_task = *value; 
-                add_new_task(todo_list, new_task); 
-                display_todo(todo_list); 
-            }else{
-                println!("please provide a new name for the task"); 
+            if let Some(value) = args.get(1) {
+                let new_task = value;
+                add_new_task(todo_list, new_task);
+                display_todo(todo_list);
+            } else {
+                println!("please provide a new name for the task");
             }
-        },
+        }
 
-        "show" =>{
+        "show" => {
+            display_todo(todo_list);
+        }
 
-            display_todo(todo_list); 
+        "delete" => match &args[1].parse::<u64>() {
+            Ok(value) => {
+                remove_task(todo_list, *value);
+            }
 
-        },
-
-        "delete" => {
-
-            match &args[1].parse::<u64>(){
-                Ok(value) =>{
-                    remove_task(todo_list, *value);
-                }
-
-                Err(message) =>{
-                    println!("{}", message.to_string()); 
-                }
+            Err(message) => {
+                println!("{}", message.to_string());
             }
         },
 
         "update" => {
-            
-            // possibility 1: id parsing error 
-            match &args[1].parse::<u64>(){
+            // possibility 1: id parsing error
+            match &args[1].parse::<u64>() {
                 Ok(value) => {
-
-                    // possibility 2: task getting error 
-                    if let Ok(task) = get_task(todo_list, *value){
-
-                        // possibility 3: no third argument provided. 
-                        if let Some(value) = args.get(2){
-                            let new_task = *value; 
-                            task.update_task(new_task.into()); 
-                        }else{
-                            println!("no new task provided"); 
+                    // possibility 2: task getting error
+                    if let Ok(task) = get_task(todo_list, *value) {
+                        // possibility 3: no third argument provided.
+                        if let Some(value) = args.get(2) {
+                            let new_task = *value;
+                            task.update_task(new_task.into());
+                        } else {
+                            println!("no new task provided");
                         }
-
-                    }else{
-                        println!("task not found in todo list"); 
+                    } else {
+                        println!("task not found in todo list");
                     }
-                },
+                }
 
                 Err(message) => {
-                    print!("{}", message); 
+                    print!("{}", message);
                 }
             }
-        },
+        }
 
-        "done" => {
-
-            match &args[1].parse::<u64>(){
-                Ok(value) =>{
-                    if let Ok(task) = get_task(todo_list, *value){
-                        task.update_status(); 
-                    }else{
-                        println!("task id not found in list"); 
-                    }
-                }, 
-                Err(message) =>{
-                    println!("{}", message.to_string());
+        "done" => match &args[1].parse::<u64>() {
+            Ok(value) => {
+                if let Ok(task) = get_task(todo_list, *value) {
+                    task.update_status();
+                } else {
+                    println!("task id not found in list");
                 }
+            }
+            Err(message) => {
+                println!("{}", message.to_string());
             }
         },
 
         "exit" => {
-            process::exit(0); 
+            process::exit(0);
         }
 
         "help" | _ => {
-            display_help(); 
+            display_help();
         }
-        
     }
 }
 
-
-pub fn run(args: Vec<&str>, todo: &mut Vec<Task>){
-
-    parse_arguments(args, todo); 
-        
+pub fn run(args: Vec<&str>, todo: &mut Vec<Task>) {
+    parse_arguments(args, todo);
 }

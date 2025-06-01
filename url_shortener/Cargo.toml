@@ -1,0 +1,15 @@
+[package]
+name = "url_shortener"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.3"
+base62 = "2.2.1"
+chrono = { version = "0.4.40", features = ["serde"] }
+dotenvy = "0.15.7"
+seahash = "4.1.0"
+serde = { version = "1.0.219", features = ["derive"] }
+sqlx = { version = "0.8.3", features = ["postgres","macros","runtime-tokio-native-tls"] }
+thiserror = "2.0.12"
+tokio = { version = "1.44.2", features = ["full"] }
